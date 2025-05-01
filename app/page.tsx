@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import {useEffect, useState} from 'react';
 import { saveAs } from 'file-saver';
 import fontkit from '@pdf-lib/fontkit';
 import { PDFDocument, rgb } from 'pdf-lib';
@@ -14,9 +14,12 @@ interface VoucherData {
 
 // Helper function to format date in dd/mm/yyyy
 const formatDate = (date: string) => {
+    if (!date) return ''; // This handles undefined, null, and empty string
     const [year, month, day] = date.split('-');
+    if (!year || !month || !day) return ''; // In case it's not a valid date string
     return `${day}/${month}/${year}`;
 };
+
 
 const generatePdf = async (data: VoucherData) => {
     const existingPdfBytes = await fetch('/CEYLON HAVEN_VOUCHER_FINAL.pdf').then(res => res.arrayBuffer());
@@ -35,8 +38,12 @@ const generatePdf = async (data: VoucherData) => {
 
     firstPage.drawText(data.bookingId, { x: 250, y: height - 97, size: 9, font: montserratFont, color });
     firstPage.drawText(data.client,    { x: 227, y: height - 116.5, size: 9, font: montserratFont, color });
-    firstPage.drawText(formattedCheckIn,   { x: 239, y: height - 158, size: 9, font: montserratFont, color });
-    firstPage.drawText(formattedCheckOut,  { x: 248, y: height - 177, size: 9, font: montserratFont, color });
+    if (formattedCheckIn) {
+        firstPage.drawText(formattedCheckIn, { x: 239, y: height - 158, size: 9, font: montserratFont, color });
+    }
+    if (formattedCheckOut) {
+        firstPage.drawText(formattedCheckOut, { x: 248, y: height - 177, size: 9, font: montserratFont, color });
+    }
 
     return await pdfDoc.save();
 };
@@ -72,6 +79,10 @@ export default function Home() {
         const url = URL.createObjectURL(blob);
         setPreviewUrl(url);
     };
+
+    useEffect(() => {
+        void handlePreview()
+    },[])
 
     const handleDownload = async () => {
         const pdfBytes = await generatePdf(form);
